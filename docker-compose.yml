@@ -1,0 +1,13 @@
+services:
+  tigerbeetle:
+    image: ghcr.io/tigerbeetledb/tigerbeetle:latest
+    command: >
+      start --addresses=0.0.0.0:3000
+             --replica=0
+             --replica-count=1
+             --cluster=0
+             --storage=/etc/tb/0_0.tigerbeetle
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./0_0.tigerbeetle:/etc/tb/0_0.tigerbeetle
