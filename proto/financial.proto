@@ -25,12 +25,12 @@ message CreateAccountRequest {
 
 // Requisição para buscar uma conta
 message GetAccountRequest {
-  uint64 id = 1;
+  string id = 1;
 }
 
 // Resposta de uma operação com conta
 message AccountResponse {
-  uint64 id = 1;
+  string id = 1;
   uint32 code = 2;
   uint32 ledger = 3;
   int64 balance = 4;

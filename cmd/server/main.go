@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"strings"
 
 	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/repository"
 	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/service"
@@ -18,19 +17,20 @@ import (
 func main() {
 	// Parâmetros da linha de comando
 	port := flag.Int("port", 50051, "Porta do servidor gRPC")
-	tbAddresses := flag.String("tb-addresses", "localhost:3000", "Endereços do TigerBeetle separados por vírgula")
-	clusterID := flag.Uint("cluster-id", 0, "ID do cluster TigerBeetle")
+	clusterID := 0
 	flag.Parse()
 
 	// Divide os endereços do TigerBeetle
-	addresses := strings.Split(*tbAddresses, ",")
+	addresses := "3000"
 
 	// Inicializa o repositório TigerBeetle
-	repo, err := repository.NewTigerBeetleRepository(addresses, uint64(*clusterID))
+	repo, err := repository.NewTigerBeetleRepository([]string{addresses}, uint64(clusterID))
 	if err != nil {
 		log.Fatalf("Falha ao inicializar repositório TigerBeetle: %v", err)
 	}
 	defer repo.Close()
+
+	println("Conectado ao TigerBettle")
 
 	// Inicializa o servidor gRPC
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
@@ -51,4 +51,6 @@ func main() {
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Falha ao servir: %v", err)
 	}
+
+	log.Printf("Teste")
 }

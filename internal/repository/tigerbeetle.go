@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	tb "github.com/tigerbeetle/tigerbeetle-go"
 	tb_types "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
@@ -36,28 +37,28 @@ func (r *TigerBeetleRepository) Close() {
 }
 
 // CreateAccount cria uma nova conta no TigerBeetle
-func (r *TigerBeetleRepository) CreateAccount(ctx context.Context, account tb_types.Account) (tb_types.CreateAccountResult, error) {
+func (r *TigerBeetleRepository) CreateAccount(ctx context.Context, account tb_types.Account) ([]tb_types.AccountEventResult, error) {
 	accounts := []tb_types.Account{account}
+
+	account = accounts[0]
+
+	log.Printf("Criando conta: %v", account)
+	log.Printf("Criando conta: ID=%v Ledger=%v Code=%v", account.ID, account.Ledger, account.Code)
 
 	// Chamar com apenas um argumento
 	results, err := r.client.CreateAccounts(accounts)
-	if err != nil {
-		return results[0].Result, fmt.Errorf("falha ao criar conta: %w", err)
-	}
+	log.Printf("Result: %v", results)
+	log.Printf("Result: %v", err)
 
-	// Verificar se temos resultados
-	if len(results) == 0 {
-		return results[0].Result, fmt.Errorf("nenhum resultado retornado da operação")
-	}
+	//if err != nil {
+	//	return 0, fmt.Errorf("erro ao criar conta no TigerBeetle: %w", err)
+	//}
+	//
+	//if len(results) == 0 {
+	//	return 0, fmt.Errorf("nenhum resultado retornado: a conta pode ser inválida")
+	//}
 
-	// Verificar o resultado da operação
-	result := results[0].Result
-
-	if result != tb_types.AccountOK {
-		return results[0].Result, fmt.Errorf("erro ao criar conta: código %d", result)
-	}
-
-	return result, nil
+	return results, nil
 }
 
 // GetAccount busca uma conta pelo ID
