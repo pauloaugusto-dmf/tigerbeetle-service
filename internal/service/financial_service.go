@@ -2,76 +2,19 @@ package service
 
 import (
 	"context"
-	"encoding/binary"
-	"errors"
 	"fmt"
 	"log"
-	"math/big"
 	"strconv"
-
-	pb "github.com/pauloaugusto-dmf/tigerbeetle-service/proto"
 
 	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/repository"
 
-	"github.com/tigerbeetle/tigerbeetle-go/pkg/types"
+	. "github.com/pauloaugusto-dmf/tigerbeetle-service/internal/tbutil"
+	pb "github.com/pauloaugusto-dmf/tigerbeetle-service/proto"
 	tb_types "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
+
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-func Uint128ToUint64Safe(u types.Uint128) (uint64, error) {
-	// Verifica os bytes mais significativos (8 a 15)
-	for i := 8; i < 16; i++ {
-		if u[i] != 0 {
-			return 0, errors.New("valor excede uint64")
-		}
-	}
-
-	// Converte os primeiros 8 bytes (parte baixa)
-	return binary.LittleEndian.Uint64(u[0:8]), nil
-}
-
-func Uint128ToString(u types.Uint128) string {
-	// TigerBeetle representa Uint128 como little-endian.
-	// Reverte para big-endian e converte para big.Int
-	reversed := make([]byte, 16)
-	copy(reversed, u[:])
-	// Como está little-endian, precisamos inverter
-	for i := 0; i < 8; i++ {
-		reversed[i], reversed[15-i] = u[15-i], u[i]
-	}
-	return new(big.Int).SetBytes(reversed).String()
-}
-
-func ParseUint128FromString(s string) (types.Uint128, error) {
-	i := new(big.Int)
-	_, ok := i.SetString(s, 10)
-	if !ok {
-		return types.Uint128{}, errors.New("não foi possível converter string para big.Int")
-	}
-
-	if i.Sign() < 0 {
-		return types.Uint128{}, errors.New("valor negativo não é suportado para uint128")
-	}
-
-	// Obtem os bytes da representação big-endian
-	b := i.Bytes()
-
-	// Se o número for menor que 16 bytes, precisamos preenchê-lo com zeros à esquerda
-	if len(b) > 16 {
-		return types.Uint128{}, errors.New("valor excede 128 bits")
-	}
-
-	var u types.Uint128
-	copy(u[16-len(b):], b) // insere os bytes no final, mantendo big-endian
-
-	// Reverter para little-endian (TigerBeetle usa little-endian)
-	for i := 0; i < 8; i++ {
-		u[i], u[15-i] = u[15-i], u[i]
-	}
-
-	return u, nil
-}
 
 // FinancialService implementa a interface gRPC
 type FinancialService struct {
@@ -93,7 +36,7 @@ func (s *FinancialService) CreateAccount(ctx context.Context, req *pb.CreateAcco
 	// Usando uint64 diretamente para a ID
 	account := tb_types.Account{
 		ID:          id,
-		UserData128: types.ToUint128(0),
+		UserData128: tb_types.ToUint128(0),
 		UserData64:  0,
 		UserData32:  0,
 		Ledger:      req.Ledger,
