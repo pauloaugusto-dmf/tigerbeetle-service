@@ -42,8 +42,8 @@ message AccountResponse {
 
 // Requisição para criar uma transferência
 message CreateTransferRequest {
-  uint64 debit_account_id = 1;
-  uint64 credit_account_id = 2;
+  string debit_account_id = 1;
+  string credit_account_id = 2;
   uint64 amount = 3;
   uint32 ledger = 4;
   string code = 5;
@@ -52,14 +52,14 @@ message CreateTransferRequest {
 
 // Requisição para buscar uma transferência
 message GetTransferRequest {
-  uint64 id = 1;
+  string id = 1;
 }
 
 // Resposta de uma operação com transferência
 message TransferResponse {
-  uint64 id = 1;
-  uint64 debit_account_id = 2;
-  uint64 credit_account_id = 3;
+  string id = 1;
+  string debit_account_id = 2;
+  string credit_account_id = 3;
   uint64 amount = 4;
   uint32 ledger = 5;
   string code = 6;

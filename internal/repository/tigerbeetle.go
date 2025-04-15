@@ -42,21 +42,10 @@ func (r *TigerBeetleRepository) CreateAccount(ctx context.Context, account tb_ty
 
 	account = accounts[0]
 
-	log.Printf("Criando conta: %v", account)
-	log.Printf("Criando conta: ID=%v Ledger=%v Code=%v", account.ID, account.Ledger, account.Code)
-
 	// Chamar com apenas um argumento
 	results, err := r.client.CreateAccounts(accounts)
 	log.Printf("Result: %v", results)
 	log.Printf("Result: %v", err)
-
-	//if err != nil {
-	//	return 0, fmt.Errorf("erro ao criar conta no TigerBeetle: %w", err)
-	//}
-	//
-	//if len(results) == 0 {
-	//	return 0, fmt.Errorf("nenhum resultado retornado: a conta pode ser inválida")
-	//}
 
 	return results, nil
 }
@@ -83,6 +72,8 @@ func (r *TigerBeetleRepository) CreateTransfer(ctx context.Context, transfer tb_
 	transfers := []tb_types.Transfer{transfer}
 
 	results, err := r.client.CreateTransfers(transfers)
+	log.Printf("Erro: %v", err)
+	log.Printf("Erro: %v", results)
 	if err != nil {
 		return nil, fmt.Errorf("falha ao criar transferência: %w", err)
 	}

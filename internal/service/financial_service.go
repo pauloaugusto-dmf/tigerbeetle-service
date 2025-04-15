@@ -133,8 +133,18 @@ func (s *FinancialService) CreateTransfer(ctx context.Context, req *pb.CreateTra
 		}, status.Error(codes.InvalidArgument, "Invalid code")
 	}
 
-	debit_account_id := tb_types.ToUint128(req.DebitAccountId)
-	credit_account_id := tb_types.ToUint128(req.CreditAccountId)
+	log.Printf("Debit: %v", req.GetDebitAccountId())
+	debit_account_id, err := ParseUint128FromString(req.DebitAccountId)
+	if err != nil {
+		log.Fatalf("Error converting ID: %v", err)
+	}
+
+	log.Printf("Credit: %v", req.CreditAccountId)
+	credit_account_id, err := ParseUint128FromString(req.CreditAccountId)
+	if err != nil {
+		log.Fatalf("Error converting ID: %v", err)
+	}
+
 	amount := tb_types.ToUint128(req.Amount)
 
 	transfer := tb_types.Transfer{
@@ -156,20 +166,9 @@ func (s *FinancialService) CreateTransfer(ctx context.Context, req *pb.CreateTra
 		}, status.Error(codes.Internal, err.Error())
 	}
 
-	idResult, err := Uint128ToUint64Safe(created.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error converting ID: %w", err)
-	}
-
-	debitAccountId, err := Uint128ToUint64Safe(created.DebitAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error converting DebitAccountID: %w", err)
-	}
-
-	creditAccountId, err := Uint128ToUint64Safe(created.CreditAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error converting CreditAccountID: %w", err)
-	}
+	idResult := Uint128ToString(created.ID)
+	debitAccountId := Uint128ToString(created.DebitAccountID)
+	creditAccountId := Uint128ToString(created.CreditAccountID)
 
 	amountResult, err := Uint128ToUint64Safe(created.Amount)
 	if err != nil {
@@ -194,7 +193,10 @@ func (s *FinancialService) CreateTransfer(ctx context.Context, req *pb.CreateTra
 func (s *FinancialService) GetTransfer(ctx context.Context, req *pb.GetTransferRequest) (*pb.TransferResponse, error) {
 	log.Printf("Received request to fetch transfer: %v", req)
 
-	id := tb_types.ToUint128(req.Id)
+	id, err := ParseUint128FromString(req.Id)
+	if err != nil {
+		log.Fatalf("Error converting ID: %v", err)
+	}
 
 	transfer, err := s.repo.GetTransfer(ctx, id)
 	if err != nil {
@@ -205,25 +207,14 @@ func (s *FinancialService) GetTransfer(ctx context.Context, req *pb.GetTransferR
 		}, status.Error(codes.Internal, err.Error())
 	}
 
-	idResult, err := Uint128ToUint64Safe(transfer.ID)
-	if err != nil {
-		return nil, fmt.Errorf("error converting ID: %w", err)
-	}
-
-	debitAccountId, err := Uint128ToUint64Safe(transfer.DebitAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error converting DebitAccountID: %w", err)
-	}
-
-	creditAccountId, err := Uint128ToUint64Safe(transfer.CreditAccountID)
-	if err != nil {
-		return nil, fmt.Errorf("error converting CreditAccountID: %w", err)
-	}
-
 	amountResult, err := Uint128ToUint64Safe(transfer.Amount)
 	if err != nil {
 		return nil, fmt.Errorf("error converting Amount: %w", err)
 	}
+
+	idResult := Uint128ToString(transfer.ID)
+	debitAccountId := Uint128ToString(transfer.DebitAccountID)
+	creditAccountId := Uint128ToString(transfer.CreditAccountID)
 
 	response := &pb.TransferResponse{
 		Id:              idResult,
