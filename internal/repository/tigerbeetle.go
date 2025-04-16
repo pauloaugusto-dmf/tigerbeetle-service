@@ -71,15 +71,10 @@ func (r *TigerBeetleRepository) GetAccount(ctx context.Context, id tb_types.Uint
 func (r *TigerBeetleRepository) CreateTransfer(ctx context.Context, transfer tb_types.Transfer) (*tb_types.Transfer, error) {
 	transfers := []tb_types.Transfer{transfer}
 
-	results, err := r.client.CreateTransfers(transfers)
-	log.Printf("Erro: %v", err)
-	log.Printf("Erro: %v", results)
+	_, err := r.client.CreateTransfers(transfers)
+
 	if err != nil {
 		return nil, fmt.Errorf("falha ao criar transferência: %w", err)
-	}
-
-	if results[0].Result != tb_types.TransferOK {
-		return nil, fmt.Errorf("erro ao criar transferência: %s", results[0].Result.String())
 	}
 
 	return &transfer, nil

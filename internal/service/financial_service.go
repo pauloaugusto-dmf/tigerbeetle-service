@@ -122,7 +122,7 @@ func (s *FinancialService) GetAccount(ctx context.Context, req *pb.GetAccountReq
 
 // CreateTransfer creates a new transfer
 func (s *FinancialService) CreateTransfer(ctx context.Context, req *pb.CreateTransferRequest) (*pb.TransferResponse, error) {
-	log.Printf("Received request to create transfer: %v", req)
+	log.Printf("Received request to create transfer: %+v", req)
 
 	code, err := strconv.ParseUint(req.Code, 10, 16)
 	if err != nil {
@@ -133,13 +133,11 @@ func (s *FinancialService) CreateTransfer(ctx context.Context, req *pb.CreateTra
 		}, status.Error(codes.InvalidArgument, "Invalid code")
 	}
 
-	log.Printf("Debit: %v", req.GetDebitAccountId())
 	debit_account_id, err := ParseUint128FromString(req.DebitAccountId)
 	if err != nil {
 		log.Fatalf("Error converting ID: %v", err)
 	}
 
-	log.Printf("Credit: %v", req.CreditAccountId)
 	credit_account_id, err := ParseUint128FromString(req.CreditAccountId)
 	if err != nil {
 		log.Fatalf("Error converting ID: %v", err)
@@ -191,7 +189,6 @@ func (s *FinancialService) CreateTransfer(ctx context.Context, req *pb.CreateTra
 
 // GetTransfer fetches a transfer by ID
 func (s *FinancialService) GetTransfer(ctx context.Context, req *pb.GetTransferRequest) (*pb.TransferResponse, error) {
-	log.Printf("Received request to fetch transfer: %v", req)
 
 	id, err := ParseUint128FromString(req.Id)
 	if err != nil {
