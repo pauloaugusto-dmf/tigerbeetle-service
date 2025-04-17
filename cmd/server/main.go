@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/logger"
 	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/repository"
 	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/service"
 	pb "github.com/pauloaugusto-dmf/tigerbeetle-service/proto"
@@ -15,6 +16,7 @@ import (
 )
 
 func main() {
+	logger.Init(false)
 	// Parâmetros da linha de comando
 	port := flag.Int("port", 50051, "Porta do servidor gRPC")
 	clusterID := 0

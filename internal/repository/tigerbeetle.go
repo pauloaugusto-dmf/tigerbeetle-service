@@ -1,27 +1,25 @@
-// internal/repository/tigerbeetle.go
 package repository
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+
+	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/logger"
+	"github.com/pauloaugusto-dmf/tigerbeetle-service/internal/validation"
 
 	tb "github.com/tigerbeetle/tigerbeetle-go"
 	tb_types "github.com/tigerbeetle/tigerbeetle-go/pkg/types"
 )
 
-// TigerBeetleRepository gerencia a conexão com o TigerBeetle
 type TigerBeetleRepository struct {
 	client tb.Client
 }
 
-// NewTigerBeetleRepository cria uma nova instância do repositório
 func NewTigerBeetleRepository(addresses []string, clusterID uint64) (*TigerBeetleRepository, error) {
-	// Cria um cliente TigerBeetle
 	client, err := tb.NewClient(tb_types.ToUint128(clusterID), addresses)
 	if err != nil {
-		return nil, fmt.Errorf("falha ao criar cliente TigerBeetle: %w", err)
+		return nil, fmt.Errorf("failed to create TigerBeetle client: %w", err)
 	}
 
 	return &TigerBeetleRepository{
@@ -29,68 +27,80 @@ func NewTigerBeetleRepository(addresses []string, clusterID uint64) (*TigerBeetl
 	}, nil
 }
 
-// Close fecha a conexão com o TigerBeetle
 func (r *TigerBeetleRepository) Close() {
 	if r.client != nil {
 		r.client.Close()
 	}
 }
 
-// CreateAccount cria uma nova conta no TigerBeetle
 func (r *TigerBeetleRepository) CreateAccount(ctx context.Context, account tb_types.Account) ([]tb_types.AccountEventResult, error) {
-	accounts := []tb_types.Account{account}
+	if err := validation.ValidateAccount(account); err != nil {
+		logger.Error("account validation failed", "error", err)
+		return nil, err
+	}
 
-	account = accounts[0]
+	logger.Info("creating account", "id", account.ID, "ledger", account.Ledger)
 
-	// Chamar com apenas um argumento
-	results, err := r.client.CreateAccounts(accounts)
-	log.Printf("Result: %v", results)
-	log.Printf("Result: %v", err)
+	results, err := r.client.CreateAccounts([]tb_types.Account{account})
+	if err != nil {
+		logger.Error("error creating account", "error", err)
+		return nil, err
+	}
+
+	for _, result := range results {
+		if result.Result != 0 {
+			logger.Error("account creation failed", "result_code", result.Result, "id", account.ID)
+			return results, fmt.Errorf("account creation failed with code %d", result.Result)
+		}
+	}
 
 	return results, nil
 }
 
-// GetAccount busca uma conta pelo ID
 func (r *TigerBeetleRepository) GetAccount(ctx context.Context, id tb_types.Uint128) (*tb_types.Account, error) {
-	ids := []tb_types.Uint128{id}
+	logger.Debug("looking up account", "id", id)
 
-	// Agora recebe diretamente as contas e o erro
-	accounts, err := r.client.LookupAccounts(ids)
+	accounts, err := r.client.LookupAccounts([]tb_types.Uint128{id})
 	if err != nil {
-		return nil, fmt.Errorf("falha ao buscar conta: %w", err)
+		logger.Error("failed to fetch account", "error", err)
+		return nil, fmt.Errorf("failed to fetch account: %w", err)
 	}
-
 	if len(accounts) == 0 {
-		return nil, errors.New("conta não encontrada")
+		logger.Info("account not found", "id", id)
+		return nil, errors.New("account not found")
 	}
 
 	return &accounts[0], nil
 }
 
-// CreateTransfer cria uma nova transferência
 func (r *TigerBeetleRepository) CreateTransfer(ctx context.Context, transfer tb_types.Transfer) (*tb_types.Transfer, error) {
-	transfers := []tb_types.Transfer{transfer}
+	if err := validation.ValidateTransfer(transfer); err != nil {
+		logger.Error("transfer validation failed", "error", err)
+		return nil, err
+	}
 
-	_, err := r.client.CreateTransfers(transfers)
+	logger.Info("creating transfer", "id", transfer.ID, "amount", transfer.Amount)
 
+	_, err := r.client.CreateTransfers([]tb_types.Transfer{transfer})
 	if err != nil {
-		return nil, fmt.Errorf("falha ao criar transferência: %w", err)
+		logger.Error("error creating transfer", "error", err)
+		return nil, fmt.Errorf("failed to create transfer: %w", err)
 	}
 
 	return &transfer, nil
 }
 
 func (r *TigerBeetleRepository) GetTransfer(ctx context.Context, id tb_types.Uint128) (*tb_types.Transfer, error) {
-	ids := []tb_types.Uint128{id}
+	logger.Debug("looking up transfer", "id", id)
 
-	// Agora recebe os transfers diretamente
-	transfers, err := r.client.LookupTransfers(ids)
+	transfers, err := r.client.LookupTransfers([]tb_types.Uint128{id})
 	if err != nil {
-		return nil, fmt.Errorf("falha ao buscar transferência: %w", err)
+		logger.Error("failed to fetch transfer", "error", err)
+		return nil, fmt.Errorf("failed to fetch transfer: %w", err)
 	}
-
 	if len(transfers) == 0 {
-		return nil, errors.New("transferência não encontrada")
+		logger.Info("transfer not found", "id", id)
+		return nil, errors.New("transfer not found")
 	}
 
 	return &transfers[0], nil
